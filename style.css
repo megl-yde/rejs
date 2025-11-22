@@ -90,6 +90,29 @@ header h1 {
     background-color: #c0392b;
 }
 
+/* Icon buttons */
+.btn svg {
+    display: inline-block;
+    vertical-align: middle;
+    width: 16px;
+    height: 16px;
+}
+
+.btn-small.btn-edit,
+.btn-small.btn-delete {
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    margin-right: 5px;
+}
+
+.btn-delete svg {
+    width: 16px;
+    height: 16px;
+}
+
 /* Sort Controls */
 .sort-controls {
     margin-bottom: 30px;
@@ -189,6 +212,14 @@ header h1 {
 
 .travels-table td.actions {
     white-space: nowrap;
+}
+
+.travels-table td.actions .btn {
+    margin-right: 5px;
+}
+
+.travels-table td.actions .btn:last-child {
+    margin-right: 0;
 }
 
 /* Form */

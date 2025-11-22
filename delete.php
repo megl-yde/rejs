@@ -9,7 +9,7 @@ $travelData = null;
 
 if ($travelId <= 0) {
     $notFound = true;
-    $errors[] = 'Invalid travel ID.';
+    $errors[] = 'Ugyldigt rejse-ID.';
 }
 
 // Load travel data for confirmation display
@@ -23,11 +23,11 @@ if (!$notFound) {
         
         if (!$travelData) {
             $notFound = true;
-            $errors[] = 'Travel not found.';
+            $errors[] = 'Rejse ikke fundet.';
         }
     } catch (PDOException $e) {
         error_log("Error loading travel: " . $e->getMessage());
-        $errors[] = 'An error occurred while loading the travel.';
+        $errors[] = 'Der opstod en fejl ved indlæsning af rejsen.';
         $notFound = true;
     }
 }
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$notFound && $travelData) {
             exit;
         } catch (PDOException $e) {
             error_log("Error deleting travel: " . $e->getMessage());
-            $errors[] = 'An error occurred while deleting the travel. Please try again.';
+            $errors[] = 'Der opstod en fejl ved sletning af rejsen. Prøv venligst igen.';
         }
     } else {
         // User cancelled - redirect to index
@@ -58,23 +58,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$notFound && $travelData) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="da">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel App - Delete Travel</title>
+    <title>Rejseapp - Slet Rejse</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Delete Travel</h1>
-            <a href="index.php" class="btn btn-secondary">Back to List</a>
+            <h1>Slet Rejse</h1>
+            <a href="index.php" class="btn btn-secondary">Tilbage til Liste</a>
         </header>
 
         <?php if ($notFound): ?>
             <div class="message message-error">
-                <p>Travel not found. <a href="index.php">Return to travel list</a></p>
+                <p>Rejse ikke fundet. <a href="index.php">Tilbage til rejseliste</a></p>
             </div>
         <?php elseif (!empty($errors)): ?>
             <div class="message message-error">
@@ -86,22 +87,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$notFound && $travelData) {
             </div>
         <?php elseif ($travelData): ?>
             <div class="message message-error">
-                <p><strong>Are you sure you want to delete this travel?</strong></p>
-                <p>This action cannot be undone.</p>
+                <p><strong>Er du sikker på, at du vil slette denne rejse?</strong></p>
+                <p>Denne handling kan ikke fortrydes.</p>
             </div>
 
             <div class="delete-confirmation">
                 <div class="travel-info">
-                    <p><strong>City:</strong> <?php echo htmlspecialchars($travelData['city'], ENT_QUOTES, 'UTF-8'); ?></p>
-                    <p><strong>Country:</strong> <?php echo htmlspecialchars($travelData['country'], ENT_QUOTES, 'UTF-8'); ?></p>
-                    <p><strong>Year:</strong> <?php echo htmlspecialchars($travelData['year'], ENT_QUOTES, 'UTF-8'); ?></p>
+                    <p><strong>By:</strong> <?php echo htmlspecialchars($travelData['city'], ENT_QUOTES, 'UTF-8'); ?></p>
+                    <p><strong>Land:</strong> <?php echo htmlspecialchars($travelData['country'], ENT_QUOTES, 'UTF-8'); ?></p>
+                    <p><strong>År:</strong> <?php echo htmlspecialchars($travelData['year'], ENT_QUOTES, 'UTF-8'); ?></p>
                 </div>
 
                 <form method="POST" action="delete.php?id=<?php echo $travelId; ?>" class="delete-form">
                     <input type="hidden" name="confirm" value="yes">
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-delete">Yes, Delete</button>
-                        <a href="index.php" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-delete">Ja, Slet</button>
+                        <a href="index.php" class="btn btn-secondary">Annuller</a>
                     </div>
                 </form>
             </div>
