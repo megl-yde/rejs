@@ -407,6 +407,7 @@ header h1 {
 
 .map-popup {
     min-width: 200px;
+    max-width: 300px;
 }
 
 .map-popup h3 {
@@ -418,6 +419,34 @@ header h1 {
 .map-popup p {
     margin: 5px 0;
     color: #555;
+}
+
+.map-popup .travel-count {
+    margin: 8px 0;
+    color: #3498db;
+    font-size: 14px;
+}
+
+.map-popup .travel-list {
+    margin-top: 10px;
+}
+
+.map-popup .travel-item {
+    margin: 12px 0;
+}
+
+.map-popup .travel-item:first-child {
+    margin-top: 0;
+}
+
+.map-popup .travel-item:last-child {
+    margin-bottom: 0;
+}
+
+.map-popup .travel-separator {
+    margin: 12px 0;
+    border: none;
+    border-top: 1px solid #e0e0e0;
 }
 
 .map-popup .btn {

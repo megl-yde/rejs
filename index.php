@@ -211,25 +211,66 @@ try {
                         return;
                     }
 
-                    const bounds = [];
+                    // Group travels by coordinates
+                    const locationGroups = new Map();
+                    
                     travels.forEach(travel => {
                         const lat = parseFloat(travel.latitude);
                         const lon = parseFloat(travel.longitude);
                         
                         if (!isNaN(lat) && !isNaN(lon)) {
-                            const popupContent = `
-                                <div class="map-popup">
-                                    <h3>${escapeHtml(travel.city)}, ${escapeHtml(travel.country)}</h3>
+                            // Create a key from coordinates (rounded to avoid floating point issues)
+                            const coordKey = `${lat.toFixed(8)},${lon.toFixed(8)}`;
+                            
+                            if (!locationGroups.has(coordKey)) {
+                                locationGroups.set(coordKey, {
+                                    lat: lat,
+                                    lon: lon,
+                                    travels: []
+                                });
+                            }
+                            
+                            locationGroups.get(coordKey).travels.push(travel);
+                        }
+                    });
+
+                    // Sort travels within each group by year (descending)
+                    locationGroups.forEach(group => {
+                        group.travels.sort((a, b) => parseInt(b.year) - parseInt(a.year));
+                    });
+
+                    // Create markers for each unique location
+                    const bounds = [];
+                    locationGroups.forEach(group => {
+                        // Create popup content showing all travels to this location
+                        const firstTravel = group.travels[0];
+                        let popupContent = `
+                            <div class="map-popup">
+                                <h3>${escapeHtml(firstTravel.city)}, ${escapeHtml(firstTravel.country)}</h3>
+                        `;
+                        
+                        if (group.travels.length > 1) {
+                            popupContent += `<p class="travel-count"><strong>${group.travels.length} rejser</strong></p>`;
+                        }
+                        
+                        popupContent += '<div class="travel-list">';
+                        group.travels.forEach(travel => {
+                            popupContent += `
+                                <div class="travel-item">
                                     <p><strong>År:</strong> ${escapeHtml(travel.year)}</p>
                                     ${travel.description ? `<p>${escapeHtml(travel.description)}</p>` : ''}
                                     <a href="edit.php?id=${travel.id}" class="btn btn-small btn-edit">Rediger</a>
                                 </div>
                             `;
-                            
-                            const marker = L.marker([lat, lon]).addTo(map);
-                            marker.bindPopup(popupContent);
-                            bounds.push([lat, lon]);
-                        }
+                            if (travel !== group.travels[group.travels.length - 1]) {
+                                popupContent += '<hr class="travel-separator">';
+                            }
+                        });
+                        popupContent += '</div></div>';
+                        
+                        const marker = L.marker([group.lat, group.lon]).addTo(map);
+                        marker.bindPopup(popupContent);
+                        bounds.push([group.lat, group.lon]);
                     });
 
                     // Fit map to show all markers
