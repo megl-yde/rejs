@@ -49,6 +49,8 @@ try {
     <title>Rejseapp - Mine Rejser</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 <body>
     <div class="container">
@@ -78,7 +80,21 @@ try {
                 <p>Ingen rejser registreret endnu. <a href="add.php">Tilføj din første rejsedestination!</a></p>
             </div>
         <?php else: ?>
-            <table class="travels-table">
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-button active" data-tab="map">Kort</button>
+                <button class="tab-button" data-tab="list">Liste</button>
+            </div>
+
+            <!-- Map View -->
+            <div id="map-view" class="tab-content active">
+                <div id="travel-map"></div>
+                <p class="map-info">Kortet viser alle rejser med koordinater. Rejser uden koordinater vises ikke på kortet.</p>
+            </div>
+
+            <!-- List View -->
+            <div id="list-view" class="tab-content">
+                <table class="travels-table">
                 <thead>
                     <tr>
                         <th class="sortable">
@@ -134,8 +150,108 @@ try {
                     <?php endforeach; ?>
                 </tbody>
             </table>
+            </div>
         <?php endif; ?>
     </div>
+
+    <script>
+        // Tab switching functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+
+                    // Remove active class from all buttons and contents
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+
+                    // Add active class to clicked button and corresponding content
+                    this.classList.add('active');
+                    document.getElementById(targetTab + '-view').classList.add('active');
+
+                    // Initialize map if switching to map tab and map not initialized
+                    if (targetTab === 'map' && !window.mapInitialized) {
+                        initializeMap();
+                    }
+                });
+            });
+
+            // Initialize map if map tab is active by default
+            const activeTab = document.querySelector('.tab-button.active');
+            if (activeTab && activeTab.getAttribute('data-tab') === 'map') {
+                initializeMap();
+            }
+        });
+
+        // Map initialization
+        let map;
+        let mapInitialized = false;
+
+        function initializeMap() {
+            if (mapInitialized) return;
+            
+            // Initialize map centered on Europe
+            map = L.map('travel-map').setView([54.5, 10.0], 3);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Load and display travels
+            fetch('api/travels.php')
+                .then(response => response.json())
+                .then(travels => {
+                    if (travels.length === 0) {
+                        document.querySelector('.map-info').textContent = 'Ingen rejser med koordinater fundet. Tilføj koordinater til dine rejser for at se dem på kortet.';
+                        return;
+                    }
+
+                    const bounds = [];
+                    travels.forEach(travel => {
+                        const lat = parseFloat(travel.latitude);
+                        const lon = parseFloat(travel.longitude);
+                        
+                        if (!isNaN(lat) && !isNaN(lon)) {
+                            const popupContent = `
+                                <div class="map-popup">
+                                    <h3>${escapeHtml(travel.city)}, ${escapeHtml(travel.country)}</h3>
+                                    <p><strong>År:</strong> ${escapeHtml(travel.year)}</p>
+                                    ${travel.description ? `<p>${escapeHtml(travel.description)}</p>` : ''}
+                                    <a href="edit.php?id=${travel.id}" class="btn btn-small btn-edit">Rediger</a>
+                                </div>
+                            `;
+                            
+                            const marker = L.marker([lat, lon]).addTo(map);
+                            marker.bindPopup(popupContent);
+                            bounds.push([lat, lon]);
+                        }
+                    });
+
+                    // Fit map to show all markers
+                    if (bounds.length > 0) {
+                        map.fitBounds(bounds, { padding: [50, 50] });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading travels:', error);
+                    document.querySelector('.map-info').textContent = 'Fejl ved indlæsning af rejser.';
+                });
+
+            mapInitialized = true;
+            window.mapInitialized = true;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
 </body>
 </html>
 

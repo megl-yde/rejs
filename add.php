@@ -2,6 +2,7 @@
 require_once 'config.php';
 
 $errors = [];
+$geocodeWarning = false;
 $formData = [
     'city' => '',
     'country' => '',
@@ -41,26 +42,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // If no errors, insert into database
+    // If no errors, geocode location and insert into database
     if (empty($errors)) {
-        try {
-            $pdo = getDBConnection();
-            $sql = "INSERT INTO travels (city, country, year, description) 
-                    VALUES (:city, :country, :year, :description)";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':city' => $formData['city'],
-                ':country' => $formData['country'],
-                ':year' => (int)$formData['year'],
-                ':description' => $formData['description']
-            ]);
-            
-            // Redirect to index after successful submission
-            header('Location: index.php?added=1');
-            exit;
-        } catch (PDOException $e) {
-            error_log("Error inserting travel: " . $e->getMessage());
-            $errors[] = 'Der opstod en fejl ved lagring af din rejse. Prøv venligst igen.';
+        // Check if user has confirmed to proceed without coordinates
+        $confirmedNoCoords = isset($_POST['confirm_no_coords']) && $_POST['confirm_no_coords'] === '1';
+        
+        // Attempt to geocode the location
+        $coordinates = geocodeLocation($formData['city'], $formData['country']);
+        $latitude = $coordinates ? $coordinates['lat'] : null;
+        $longitude = $coordinates ? $coordinates['lon'] : null;
+        
+        // If geocoding failed and user hasn't confirmed, show warning
+        if (!$coordinates && !$confirmedNoCoords) {
+            $geocodeWarning = true;
+        } else {
+            // Proceed with saving
+            try {
+                $pdo = getDBConnection();
+                $sql = "INSERT INTO travels (city, country, year, description, latitude, longitude) 
+                        VALUES (:city, :country, :year, :description, :latitude, :longitude)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    ':city' => $formData['city'],
+                    ':country' => $formData['country'],
+                    ':year' => (int)$formData['year'],
+                    ':description' => $formData['description'],
+                    ':latitude' => $latitude,
+                    ':longitude' => $longitude
+                ]);
+                
+                // Redirect to index after successful submission
+                header('Location: index.php?added=1');
+                exit;
+            } catch (PDOException $e) {
+                error_log("Error inserting travel: " . $e->getMessage());
+                $errors[] = 'Der opstod en fejl ved lagring af din rejse. Prøv venligst igen.';
+            }
         }
     }
 }
@@ -88,6 +105,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
                     <?php endforeach; ?>
                 </ul>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($geocodeWarning): ?>
+            <div class="message message-warning">
+                <p><strong>Kunne ikke finde koordinater</strong></p>
+                <p>Vi kunne ikke automatisk finde koordinater for <strong><?php echo htmlspecialchars($formData['city'], ENT_QUOTES, 'UTF-8'); ?>, <?php echo htmlspecialchars($formData['country'], ENT_QUOTES, 'UTF-8'); ?></strong>.</p>
+                <p>Rejsen vil ikke blive vist på kortet, medmindre du tilføjer koordinater manuelt senere.</p>
+                <div class="warning-actions">
+                    <form method="POST" action="add.php" style="display: inline;">
+                        <input type="hidden" name="city" value="<?php echo htmlspecialchars($formData['city'], ENT_QUOTES, 'UTF-8'); ?>">
+                        <input type="hidden" name="country" value="<?php echo htmlspecialchars($formData['country'], ENT_QUOTES, 'UTF-8'); ?>">
+                        <input type="hidden" name="year" value="<?php echo htmlspecialchars($formData['year'], ENT_QUOTES, 'UTF-8'); ?>">
+                        <input type="hidden" name="description" value="<?php echo htmlspecialchars($formData['description'], ENT_QUOTES, 'UTF-8'); ?>">
+                        <input type="hidden" name="confirm_no_coords" value="1">
+                        <button type="submit" class="btn btn-primary">Gem alligevel</button>
+                    </form>
+                    <button type="button" onclick="document.querySelector('.travel-form').scrollIntoView({ behavior: 'smooth' });" class="btn btn-secondary">Gå tilbage og rediger</button>
+                </div>
             </div>
         <?php endif; ?>
 
