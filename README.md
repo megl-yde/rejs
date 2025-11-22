@@ -6,7 +6,11 @@ En simpel PHP webapplikation til at registrere og administrere rejsedestinatione
 
 - ✅ Tilføj rejsedestinationer med by, land, år og beskrivelse
 - ✅ Vis alle rejsedestinationer i en tabel
+- ✅ **Kortvisning med OpenStreetMap** - Se alle rejser plottet på et interaktivt kort
+- ✅ Faner til at skifte mellem kort- og listevisning (kortet vises som standard)
 - ✅ Sorter efter by, land eller år (klik på tabeloverskrifterne)
+- ✅ **Automatisk geokodning** - Koordinater findes automatisk ved oprettelse af rejser
+- ✅ **Koordinat redigering** - Rediger koordinater manuelt eller find dem automatisk
 - ✅ Rediger eksisterende rejsedestinationer
 - ✅ Slet rejsedestinationer (med bekræftelse)
 
@@ -15,6 +19,7 @@ En simpel PHP webapplikation til at registrere og administrere rejsedestinatione
 - PHP 7.4 eller nyere
 - MariaDB/MySQL database
 - Webserver (Apache/Nginx) eller PHP built-in server til udvikling
+- Internetforbindelse (til geokodning via Nominatim API og kortvisning)
 
 ## Installation
 
@@ -32,6 +37,8 @@ Kør `database.sql` i din MariaDB/MySQL database for at oprette den nødvendige 
 ```sql
 -- Se database.sql filen
 ```
+
+**Bemærk:** Databasen indeholder nu også `latitude` og `longitude` kolonner til koordinatlagring for kortvisning.
 
 ### 3. Konfigurer databaseforbindelsen
 
@@ -64,7 +71,7 @@ Upload alle filer (undtagen `config.php.example`) til din webserver. Husk at opr
 
 ```
 rejseapp/
-├── index.php          # Hovedsiden med liste over rejser
+├── index.php          # Hovedsiden med liste over rejser og kortvisning
 ├── add.php            # Formular til at tilføje nye rejser
 ├── edit.php           # Formular til at redigere eksisterende rejser
 ├── delete.php         # Bekræftelsesside til sletning af rejser
@@ -72,6 +79,9 @@ rejseapp/
 ├── config.php.example # Template til config.php
 ├── style.css          # CSS styling
 ├── database.sql       # SQL script til at oprette database tabellen
+├── api/
+│   ├── travels.php    # API endpoint til at hente rejser som JSON
+│   └── geocode.php    # API endpoint til geokodning
 └── README.md          # Denne fil
 ```
 
@@ -88,6 +98,8 @@ rejseapp/
 - **Database:** MariaDB/MySQL
 - **Styling:** CSS3
 - **Database Access:** PDO med prepared statements
+- **Kortvisning:** Leaflet.js med OpenStreetMap tiles
+- **Geokodning:** Nominatim API (OpenStreetMap)
 
 ## Licens
 
