@@ -1,0 +1,27 @@
+# PHP konfigurationsfil med database credentials - IKKE commit!
+config.php
+
+# Editor filer
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS filer
+.DS_Store
+Thumbs.db
+
+# Log filer
+*.log
+
+# Temporary filer
+*.tmp
+*.bak
+
+# Node modules (hvis du senere tilføjer JavaScript dependencies)
+node_modules/
+
+# Vendor (hvis du bruger Composer)
+vendor/
+
